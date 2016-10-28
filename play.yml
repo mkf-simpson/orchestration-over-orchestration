@@ -1,0 +1,8 @@
+- hosts: localhost
+  tasks:
+    - name: Module test
+      orch:
+        image: "hydrosphere:mist"
+      register: result
+
+    - debug: var=result

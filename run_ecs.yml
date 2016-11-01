@@ -1,0 +1,51 @@
+---
+- name: Creating and running task
+  hosts: "localhost"
+
+  tasks:
+    - name: Creating ECS Cluster
+      ecs_cluster:
+        name: default
+        state: present
+      register: ecs_output
+
+    - name: About Cluster
+      debug: msg="{{ ecs_output }}"
+
+
+    - name: "Create task definition"
+      ecs_taskdefinition:
+        containers:
+        - name: httpd
+          cpu: 10
+          essential: true
+          image: "httpd:2.4"
+          memory: 300
+          portMappings:
+          - containerPort: 80
+            hostPort: 80
+        family: cluster-taskdef
+        state: present
+      register: create_task_output
+
+    - name: About task definition
+      debug: msg="{{ create_task_output }}"
+
+    - ecs_service:
+        state: present
+        name: console-service
+        cluster: default
+        task_definition: cluster-taskdef:1
+        desired_count: 0
+
+    - name: Run task
+      ecs_task:
+        operation: run
+        cluster: default
+        task_definition: cluster-taskdef
+        count: 1
+        started_by: "{{ lookup('env','USER') }}"
+      register: run_task_output
+
+    - name: About task
+      debug: msg="{{ run_task_output }}"
